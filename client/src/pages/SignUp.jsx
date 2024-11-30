@@ -1,7 +1,49 @@
-import { Button, Label, TextInput } from "flowbite-react"; // Importing reusable components from Flowbite React library
-import { Link } from "react-router-dom"; // Importing the Link component for navigation
+import { Button, Label, TextInput, Spinner, Alert } from "flowbite-react"; // Import Spinner and Alert from Flowbite React
+import { Link, useNavigate } from "react-router-dom"; // Importing the Link component for navigation
+import { useState } from "react"; // Import useState for state management
 
 export default function SignUp() {
+  // State variables for handling form data, error messages, and loading state
+  const [formData, setFormData] = useState({});
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [loading, setLoading] = useState(false); // Track loading state
+  const navigate = useNavigate(); // Navigate function for page redirection
+
+  // Handle input changes and update form data state
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value.trim() });
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // Prevent default form submission behavior
+    if (!formData.username || !formData.email || !formData.password) {
+      return setErrorMessage("Please fill out all fields."); // Show error if any field is missing
+    }
+
+    try {
+      setLoading(true); // Set loading to true when starting the request
+      setErrorMessage(null); // Clear previous error message
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json(); // Parse the response data
+      if (data.success === false) {
+        return setErrorMessage(data.message); // Show error message if request is unsuccessful
+      }
+      setLoading(false); // Set loading to false after the request completes
+      if (res.ok) {
+        navigate("/sign-in"); // Redirect to sign-in page on successful signup
+      }
+    } catch (error) {
+      setErrorMessage(error.message); // Show error if there's an exception
+      setLoading(false); // Set loading to false after catching the error
+    }
+  };
+
   return (
     <div className="min-h-screen mt-20">
       {/* Container for the sign-up form */}
@@ -27,7 +69,7 @@ export default function SignUp() {
         {/* Right Section */}
         <div className="flex-1">
           {/* Sign-up Form */}
-          <form className="flex flex-col gap-4">
+          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             {/* Username Input Field */}
             <div>
               <Label value="Your username" /> {/* Label for Username */}
@@ -35,6 +77,7 @@ export default function SignUp() {
                 type="text"
                 placeholder="Username" // Placeholder text for input
                 id="username"
+                onChange={handleChange} // Handle change for username input
               />
             </div>
 
@@ -42,9 +85,10 @@ export default function SignUp() {
             <div>
               <Label value="Your email" /> {/* Label for Email */}
               <TextInput
-                type="text"
-                placeholder="name@company.com" // Placeholder text for input
+                type="email"
+                placeholder="name@company.com"
                 id="email"
+                onChange={handleChange} // Handle change for email input
               />
             </div>
 
@@ -52,15 +96,27 @@ export default function SignUp() {
             <div>
               <Label value="Your password" /> {/* Label for Password */}
               <TextInput
-                type="text"
-                placeholder="Password" // Placeholder text for input
+                type="password"
+                placeholder="Password"
                 id="password"
+                onChange={handleChange} // Handle change for password input
               />
             </div>
 
-            {/* Submit Button */}
-            <Button gradientDuoTone="purpleToPink" type="submit">
-              Sign Up
+            {/* Sign-Up Button with Loading Spinner */}
+            <Button
+              gradientDuoTone="purpleToPink"
+              type="submit"
+              disabled={loading} // Disable the button while loading
+            >
+              {loading ? (
+                <>
+                  <Spinner size="sm" /> {/* Spinner icon when loading */}
+                  <span className="pl-3">Loading...</span>
+                </>
+              ) : (
+                "Sign Up"
+              )}
             </Button>
           </form>
 
@@ -71,6 +127,13 @@ export default function SignUp() {
               Sign In
             </Link>
           </div>
+
+          {/* Error Message Alert */}
+          {errorMessage && (
+            <Alert className="mt-5" color="failure">
+              {errorMessage} {/* Display error message if present */}
+            </Alert>
+          )}
         </div>
       </div>
     </div>
