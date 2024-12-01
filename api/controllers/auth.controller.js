@@ -1,6 +1,6 @@
 import User from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
-import { errorHandler } from "../utils/error.js"; // Adjust the path if necessary
+import { errorHandler } from "../utils/error.js"; // Adjust path if needed
 import jwt from "jsonwebtoken";
 
 // Signup function for user registration
@@ -52,6 +52,13 @@ export const signin = async (req, res, next) => {
       return next(errorHandler(400, "Invalid credentials"));
     }
 
+    // Ensure JWT_SECRET is set
+    if (!process.env.JWT_SECRET) {
+      return next(
+        errorHandler(500, "JWT Secret is not defined in environment")
+      );
+    }
+
     // Generate JWT token
     const token = jwt.sign(
       { id: user._id, isAdmin: user.isAdmin },
@@ -64,7 +71,11 @@ export const signin = async (req, res, next) => {
 
     res
       .status(200)
-      .cookie("access_token", token, { httpOnly: true })
+      .cookie("access_token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // Set to true for production
+        sameSite: "strict", // Helps to avoid CSRF
+      })
       .json({ message: "Signin successful", user: rest });
   } catch (error) {
     next(error);
