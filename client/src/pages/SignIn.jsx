@@ -1,16 +1,20 @@
-// Import necessary components and hooks from libraries
-import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react"; // UI components from Flowbite
-import { useState } from "react"; // React hook for state management
-import { Link, useNavigate } from "react-router-dom"; // React Router components for navigation
+import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  signInStart,
+  signInSuccess,
+  signInFailure,
+} from "../redux/user/userSlice";
 
 export default function SignIn() {
-  // State for managing form data, error messages, and loading state
-  const [formData, setFormData] = useState({}); // Stores user input for email and password
-  const [errorMessage, setErrorMessage] = useState(null); // Stores error messages to display to the user
-  const [loading, setLoading] = useState(false); // Indicates whether the sign-in process is loading
-  const navigate = useNavigate(); // Hook for programmatic navigation
-
-  // Handles changes in input fields and updates formData state
+  const [formData, setFormData] = useState({});
+  const { loading, error: errorMessage } = useSelector(
+    (state) => state.user || { loading: false, error: null }
+  ); // Provide a default value
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value.trim() }); // Updates formData with input values
   };
@@ -20,31 +24,27 @@ export default function SignIn() {
     e.preventDefault(); // Prevents default form submission behavior
     if (!formData.email || !formData.password) {
       // Checks if all required fields are filled
-      return setErrorMessage("Please fill out all fields."); // Displays error if fields are empty
+      return dispatch(signInFailure("Please fill all the fields"));
     }
     try {
-      setLoading(true); // Sets loading state to true
-      setErrorMessage(null); // Resets error message state
+      dispatch(signInStart());
       const res = await fetch("/api/auth/signin", {
         // Sends POST request to the sign-in API endpoint
         method: "POST",
-        headers: { "Content-Type": "application/json" }, // Sets content type to JSON
-        body: JSON.stringify(formData), // Sends form data as JSON
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
-      const data = await res.json(); // Parses the JSON response
+      const data = await res.json();
       if (data.success === false) {
-        // Checks if the API response indicates failure
-        return setErrorMessage(data.message); // Displays error message from API
+        dispatch(signInFailure(data.message));
       }
-      setLoading(false); // Stops loading state
+
       if (res.ok) {
-        // If the response status is OK, navigate to the home page
+        dispatch(signInSuccess(data));
         navigate("/");
       }
     } catch (error) {
-      // Catches any errors during the request
-      setErrorMessage(error.message); // Displays error message
-      setLoading(false); // Stops loading state
+      dispatch(signInFailure(error.message));
     }
   };
 
