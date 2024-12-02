@@ -1,6 +1,7 @@
 import { Button, Label, TextInput, Spinner, Alert } from "flowbite-react"; // Import Spinner and Alert from Flowbite React
 import { Link, useNavigate } from "react-router-dom"; // Importing the Link component for navigation
 import { useState } from "react"; // Import useState for state management
+import OAuth from "../components/OAuth";
 
 export default function SignUp() {
   // State variables for handling form data, error messages, and loading state
@@ -118,6 +119,7 @@ export default function SignUp() {
                 "Sign Up"
               )}
             </Button>
+            <OAuth/>
           </form>
 
           {/* Link to Sign-in Page */}
