@@ -79,15 +79,16 @@ export default function DashProfile() {
     try {
       const res = await fetch('/api/user/signout', {
         method: 'POST',
+        credentials: 'include',
       });
-      const data = await res.json();
-      if (!res.ok) {
-        console.log(data.message);
-      } else {
+      if (res.ok) {
         dispatch(signoutSuccess());
+      } else {
+        const data = await res.json();
+        console.error("Error during signout:", data.message);
       }
     } catch (error) {
-      console.log(error.message);
+      console.error("Signout error:", error.message);
     }
   };
 
@@ -173,7 +174,7 @@ export default function DashProfile() {
             </h3>
             <div className='flex justify-center gap-4'>
               <Button color='failure' onClick={handleDeleteUser}>
-                Yes, I'm sure
+                Yes, Im sure
               </Button>
               <Button color='gray' onClick={() => setShowModal(false)}>
                 No, cancel
